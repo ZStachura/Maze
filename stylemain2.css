@@ -1,0 +1,55 @@
+/*Konrad Bogacz, Zuzanna Stachura, Alicja Winnicka*/
+#body
+{
+	margin: 10px;
+	padding: 10px;
+	background-color: rgb(38, 0, 77);
+}
+#titl
+{
+	background-color: rgb(38, 0, 77);
+	text-align:center;
+	color: rgb(173, 235, 173);
+	font-size: 40px;
+	margin-bottom: 20px;
+}
+
+.pathElement {
+	background-color: rgb(173, 235, 173);
+	min-width:10px;
+	min-height:10px;
+	position:absolute;	
+	border-radius:5px;
+	
+}
+main {
+	background-color: rgb(102, 0, 204);
+	position:relative;
+	margin: auto;
+}
+nav {
+	background-color: rgb(102, 0, 204);
+	text-align:center;
+	margin:1px;
+	margin-bottom:5px;
+	padding:5px 0px;
+	display:flex;
+	allign-content:space-around;
+	margin: auto;
+}
+nav button, nav div{
+	flex-grow:1;
+	width:10%;
+	margin:0px 5px;
+	
+}
+
+nav button {
+	background-color:rgb(173, 235, 173);
+	font-size:2rem;
+	padding:5px 0px;
+	font-weight:bold;
+	font-family:sans-serif;
+	border-radius:10px;
+}
+
