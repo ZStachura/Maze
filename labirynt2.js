@@ -1,36 +1,41 @@
 //Konrad Bogacz, Zuzanna Stachura, Alicja Winnicka
 
+//#region zmienne
 
-var labir=false;
-var calosc;
-var jednakratka = 40
-var stala = 50 //zwiazana z odlegloscia miedzy "początkami kratek"
+var maze=false;
+var all;
+var onebar = 40
+var constant = 50 //zwiazana z odlegloscia miedzy "początkami kratek"
 var dim = 5;
-var Sciezki;
-var kierunekNESW = [false, false, false, false] // gora, prawo, dol, lewo
-var kierunki = [-1,-1,-1,-1]
+var Roads;
+var directionNESW = [false, false, false, false] // gora, prawo, dol, lewo
+var directions = [-1,-1,-1,-1]
 var currentIndex = 0
 var ballx = 0;
 var bally = 0;
 var ballindex = 0;
 var start = true
+var lastx=0;
+var lasty = 0;
+//#endregion
 
+//#region start
 //funkcje na start strony
 window.addEventListener('load',function(){
-	PobierzLabiryntJSON(dim,dim);
-//	NarysujLabirynt();
-	NarysujLabiryntCanvas()
-	
+	DownloadMazeJSON(dim,dim);
+	DrawMazeCanvas()
 	onStart()
 	},true);
+//#endregion
 
-function NarysujLabiryntCanvas()
+//#region Rysowanie canvas
+function DrawMazeCanvas()
 {
-	if(labir===false)
-		setTimeout(NarysujLabiryntCanvas,900);
+	if(maze===false)
+		setTimeout(DrawMazeCanvas,900);
 	else
 	{
-		Sciezki=labir.paths;
+		Roads=maze.paths;
 		//wymiary calkowite siatki labiryntu
 		var w=dim*50+20;
 		var h=dim*50+20;
@@ -39,41 +44,39 @@ function NarysujLabiryntCanvas()
 		cc.height = h+30;
 		
 		
-		//tlo labiryntu (zielone)
+		//tlo labiryntu
 		var ctx = cc.getContext("2d");
-		ctx.fillStyle = '#b3ffb3';
+		ctx.fillStyle = '#c6c5b9';
 		ctx.fillRect(10, 10, w, h)
 		
-		//mniejszy prostokat labirynty (fiolet)
+		//mniejszy prostokat labirynty
 		var ctx = cc.getContext("2d");
-		ctx.fillStyle = '#290066';
-		ctx.fillRect(12, 12, w-4, h-4)
+		ctx.fillStyle = '#000000';
+		ctx.fillRect(10, 10, w, h)
 	
-		for(let i=0; i<Sciezki.length; i++) 		
+		for(let i=0; i<Roads.length; i++) 		
 		{
 			//dla kazdej kostki
-			let x1=Sciezki[i].x;
-			let y1=Sciezki[i].y;
+			let x1=Roads[i].x;
+			let y1=Roads[i].y;
 			
 			//dla kazdej sciezki od kostki
-			for(let j=0; j<Sciezki[i].L.length; j++)
-			{
-			
-				
-				let x2=Sciezki[Sciezki[i].L[j]].x;
-				let y2=Sciezki[Sciezki[i].L[j]].y;
+			for(let j=0; j<Roads[i].L.length; j++)
+			{				
+				let x2=Roads[Roads[i].L[j]].x;
+				let y2=Roads[Roads[i].L[j]].y;
 				if(x2>=x1 && y2>=y1)
 				{
 					let dx = (x2-x1);
                     let dy = (y2-y1);
                             
-                    let xlen = jednakratka + dx * stala;// + przerwyX * dim;
-                    let ylen = jednakratka + dy * stala;// + przerwyY * dim;
+                    let xlen = onebar + dx * constant;// + przerwyX * dim;
+                    let ylen = onebar + dy * constant;// + przerwyY * dim;
                  //   console.log(x1, y1, xlen, ylen)
                     ctx.beginPath();
                 
-                    ctx.rect(x1*stala+20, y1*stala+20, xlen, ylen);
-                    ctx.fillStyle = "#b3ffb3";
+                    ctx.rect(x1*constant+20, y1*constant+20, xlen, ylen);
+                    ctx.fillStyle = "#c6c5b9";
                     ctx.fill();
 
 				}
@@ -81,8 +84,8 @@ function NarysujLabiryntCanvas()
 				//rysowanie numerkow
 				ctx.beginPath();
                 ctx.font = "15px Arial";
-				ctx.fillStyle = "black";
-				ctx.fillText(i, x1*stala+40, y1*stala+40);
+				ctx.fillStyle = "#c6c5b9";
+				ctx.fillText(i, x1*constant+40, y1*constant+40);
 			}
 			
 		}
@@ -95,71 +98,91 @@ function NarysujLabiryntCanvas()
 	}
 }
 
-
+//Rysowanie kuleczki
 function DrawBall(cc, index, nextIndex)
 {	
 	var ctx = cc.getContext("2d");
-	ctx.arc(xx, yy, jednakratka/2-3, 0, 2 * Math.PI);
-	ctx.fillStyle = "#b3ffb3";
+	ctx.arc(xx, yy, onebar/2-3, 0, 2 * Math.PI);
+	ctx.fillStyle = "#c6c5b9";
 	ctx.fill();
 	
-	kierunekNESW = [false, false, false, false]
+	directionNESW = [false, false, false, false]
 	console.log(index)
-	var xx = Sciezki[index].x * stala + jednakratka-2;
-	var yy = Sciezki[index].y * stala + jednakratka-2;
+	var xx = Roads[index].x * constant + onebar-2;
+	var yy = Roads[index].y * constant + onebar-2;
 	
 	ballx = xx;
 	bally = yy;
 
+	lastx = Roads[Roads.length-1].x * constant + onebar-2;
+	lasty= Roads[Roads.length-1].y * constant + onebar-2;
 	
-	ctx.arc(xx, yy, jednakratka/2-8, 0, 2 * Math.PI);
-	ctx.fillStyle = "red";
+	ctx.arc(xx, yy, onebar/2-8, 0, 2 * Math.PI);
+	ctx.fillStyle = "#000000";
 	ctx.fill();
 	
-	kierunki = [-1,-1,-1,-1]
+	directions = [-1,-1,-1,-1]
 	
-	for(let i = 0; i<Sciezki[index].L.length;i++)
+	for(let i = 0; i<Roads[index].L.length;i++)
 	{
-		var dx = Sciezki[Sciezki[index].L[i]].x - Sciezki[index].x
-		var dy = Sciezki[Sciezki[index].L[i]].y - Sciezki[index].y
+		var dx = Roads[Roads[index].L[i]].x - Roads[index].x
+		var dy = Roads[Roads[index].L[i]].y - Roads[index].y
 
 		console.log("DX: "+dx+" oraz DY: "+dy)
 		
 		if(dx>0 && dy == 0) //prawo
 		{
 			console.log("W PRAWO");
-			kierunekNESW[1] = true;
-			kierunki[1] = Sciezki[index].L[i]
+			directionNESW[1] = true;
+			directions[1] = Roads[index].L[i]
 			
 		}
 		else if(dx<0 && dy ==0) //lewo
 		{
 			console.log("W LEWO");
-			kierunekNESW[3] = true;
-			kierunki[3] = Sciezki[index].L[i]
+			directionNESW[3] = true;
+			directions[3] = Roads[index].L[i]
 		}
 		else if(dx==0 && dy>0) //dol
 		{
 			console.log("W DOL");
-			kierunekNESW[2] = true;
-			kierunki[2] = Sciezki[index].L[i]
+			directionNESW[2] = true;
+			directions[2] = Roads[index].L[i]
 		}
 		else if(dx==0 && dy<0) //gora
 		{
 			console.log("W GORE");
-			kierunekNESW[0] = true;
-			kierunki[0] = Sciezki[index].L[i]
+			directionNESW[0] = true;
+			directions[0] = Roads[index].L[i]
+		}
+	}
+	//console.log("Kuleczka: " +xx+"    "+yy)
+	//console.log("Last    : "+lastx+"    "+lasty)	
+	//sprawdzenie czy koniec labiryntu
+	if(ballx==lastx && bally==lasty)
+	{
+		console.log("wygrana")
+		var modal=document.getElementById("myModal");
+		modal.style.display="block";
+		window.onclick=function(event){
+			if(event.target==modal){
+				modal.style.display="none";
+				window.location.reload(true);
+				}
 		}
 	}
 }
 
+//#endregion
+
+//#region Ruchy kuleczki
 function MoveDown(cc, currentPos, nextPos) //indeksy
 {
-	if(kierunekNESW[2])
+	if(directionNESW[2])
 	{
 		console.log("ruch w dol")
 //	kierunki = [-1,-1,-1,-1]
-	NarysujLabiryntCanvas()
+	DrawMazeCanvas()
 	DrawBall(cc, nextPos)
 	currentIndex = nextPos;
 	ballindex = nextPos;
@@ -168,12 +191,12 @@ function MoveDown(cc, currentPos, nextPos) //indeksy
 
 function MoveRigth(cc, currentPos, nextPos)
 {
-	if(kierunekNESW[1])
+	if(directionNESW[1])
 	{
 		console.log("ruch w prawo")
 
 //	kierunki = [-1,-1,-1,-1]
-	NarysujLabiryntCanvas()
+	DrawMazeCanvas()
 	DrawBall(cc, nextPos)
 	currentIndex = nextPos;
 	ballindex = nextPos;
@@ -182,12 +205,12 @@ function MoveRigth(cc, currentPos, nextPos)
 
 function MoveUp(cc, currentPos, nextPos) //indeksy
 {
-	if(kierunekNESW[0])
+	if(directionNESW[0])
 	{
 		console.log("ruch w gore")
 
 //	kierunki = [-1,-1,-1,-1]
-NarysujLabiryntCanvas()
+    DrawMazeCanvas()
 	DrawBall(cc, nextPos)
 	currentIndex = nextPos;
 	ballindex = nextPos;
@@ -196,33 +219,29 @@ NarysujLabiryntCanvas()
 
 function MoveLeft(cc, currentPos, nextPos) //indeksy
 {
-	if(kierunekNESW[3])
+	if(directionNESW[3])
 	{
 		console.log("ruch w lewo")
 	
 //	kierunki = [-1,-1,-1,-1]
-	NarysujLabiryntCanvas()
+	DrawMazeCanvas()
 	DrawBall(cc, nextPos)
 	currentIndex = nextPos;
 	ballindex = nextPos;
 	
 	}
 }
+//#endregion
 
-
+//#region Czujniki
 //podłączenie czujników ruchu
 function onStart() {
-	console.log("jestem tu")
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
       DeviceOrientationEvent.requestPermission()
         .then((state) => {
           if (state === 'granted') {
             console.log("dodany motion")
-			window.addEventListener('deviceorientation', handleOrientation);
-			
-          
-	
-		  
+			window.addEventListener('deviceorientation', handleOrientation);		  
 		  } else {
             console.error('Request to access the orientation was rejected');
           }
@@ -259,88 +278,32 @@ else {
 var handleOrientationEvent = function(frontToBack, leftToRight, rotateDegrees) {
 	
 	console.log("nowy obrot")
-	if (frontToBack>45 && kierunekNESW[2])
+	if (frontToBack>45 && directionNESW[2])
 	{
 		console.log("dol")
-		MoveDown(cc, currentIndex, kierunki[2])
-		//kierunki = [-1,-1,-1,-1]
+		MoveDown(cc, currentIndex, directions[2])
 	}
-	else if(frontToBack<20 && kierunekNESW[0])
+	else if(frontToBack<20 && directionNESW[0])
 	{
 		console.log("gora")
-		MoveUp(cc,currentIndex,kierunki[0])
-		//kierunki = [-1,-1,-1,-1]
-		
+		MoveUp(cc,currentIndex,directions[0])		
 	}
 	
-	if(leftToRight>30 && kierunekNESW[1])
+	if(leftToRight>30 && directionNESW[1])
 	{
 		console.log("prawo")
-		MoveRigth(cc, currentIndex, kierunki[1])
-		//kierunki = [-1,-1,-1,-1]
+		MoveRigth(cc, currentIndex, directions[1])
 	}
-	else if(leftToRight<-30 && kierunekNESW[3])
+	else if(leftToRight<-30 && directionNESW[3])
 	{
 		console.log("lewo")
-		MoveLeft(cc,currentIndex,kierunki[3])
-		//kierunki = [-1,-1,-1,-1]
-	}
-
-	
+		MoveLeft(cc,currentIndex,directions[3])
+	}	
 };
-	
-	 
-  
-  
-  
-function NarysujLabirynt()
-{
-	if(labir===false)
-		setTimeout(NarysujLabirynt,900);
-	else
-	{
-		calosc=document.createElement('main');
-		calosc.style.width=(labir.width*50+20)+'px';
-		calosc.style.height=(labir.height*50+20)+'px';
-		Sciezki=labir.paths;
-		
-		for(let i=0; i<Sciezki.length; i++) 		
-		{
-			let x1=Sciezki[i].x;
-			let y1=Sciezki[i].y;
-			
-			for(let j=0; j<Sciezki[i].L.length; j++)
-			{
-				let x2=Sciezki[Sciezki[i].L[j]].x;
-				let y2=Sciezki[Sciezki[i].L[j]].y;	
-				let kratka=document.createElement('div');
-			
-				if(x2>=x1 && y2>=y1)
-				{
-					let xlen = (x2-x1)*stala+jednakratka;
-					let ylen = (y2-y1)*stala+jednakratka;
-				//	console.log(xlen+" and "+ylen)
-					let marginestop = y1*stala+15 //margines nad labiryntem
-					let marginesleft = x1*stala+15 //margines z lewej labiryntu
-					
-					kratka.className='pathElement';	
-					kratka.style.width=`${xlen}px`;
-					kratka.style.height=`${ylen}px`;
-					kratka.style.top=`${marginestop}px`;
-					kratka.style.left=`${marginesleft}px`;
-					
-					calosc.appendChild(kratka);
-				}
+//#endregion	
 
-			}
-			
-		}
-		document.querySelector('body').appendChild(calosc);
-		
-	}
-}
-
-function PobierzLabiryntJSON(width,height){
+//#region Pobranie PHP
+function DownloadMazeJSON(width,height){
 	let ajax=new XMLHttpRequest();
 	ajax.open("POST",`https://tales.ms.polsl.pl/marek.zabka/spec/maze.php?width=${width}&height=${height}`,true);
 	ajax.onreadystatechange=function(){
@@ -348,12 +311,12 @@ function PobierzLabiryntJSON(width,height){
 		{
 			console.log(ajax.responseText);
 			try{
-				labir=JSON.parse(ajax.responseText); // let nie można tu
+				maze=JSON.parse(ajax.responseText); // let nie można tu
 			}
 			catch (r){
 				console.log("error -- bad maze");
 				getMazeError('error -- bad maze');
-				labir=false;
+				maze=false;
 			}
 		}
 		else if(ajax.readyState==4)
@@ -368,13 +331,4 @@ function getMazeError(d)
 {
 	document.querySelector('body').innerHTML=d;
 }
-
-function resetGame(endOfGame)
-{
-	document.querySelector('body').removeChild(endOfGame);
-	document.querySelector('body').removeChild(calosc);
-	labir=false;
-	
-	PobierzLabiryntJSON(10,7);
-	NarysujLabirynt();
-}
+//#endregion
